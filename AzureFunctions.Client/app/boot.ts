@@ -19,7 +19,7 @@ import {GlobalStateService} from './services/global-state.service';
 import {TRANSLATE_PROVIDERS} from 'ng2-translate/ng2-translate';
 import 'rxjs/Rx';
 
-declare var mixpanel: any;
+let mixpanel: any;
 
 if (window.location.hostname.indexOf('localhost') === -1) {
     enableProdMode();
@@ -41,7 +41,7 @@ bootstrap(
         TelemetryService,
         UtilitiesService,
         BackgroundTasksService,
-        GlobalStateService        
+        GlobalStateService
     ]);
 
 if (typeof mixpanel !==  'undefined') {

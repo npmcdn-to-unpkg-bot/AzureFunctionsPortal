@@ -4,6 +4,9 @@ import {Observable, ReplaySubject} from 'rxjs/Rx';
 import {User} from '../models/user';
 import {TenantInfo} from '../models/tenant-info';
 import {FunctionContainer} from '../models/function-container';
+import {IAppInsights} from '../models/app-insights';
+
+let appInsights: IAppInsights;
 
 @Injectable()
 export class UserService {
@@ -38,6 +41,14 @@ export class UserService {
 
     setToken(token: string) {
         this.tokenSubject.next(token);
+        try {
+            var encodedUser = token.split('.')[1];
+            var user: {unique_name: string, email: string} = JSON.parse(atob(encodedUser));
+            var userName = (user.unique_name || user.email).replace(/[,;=| ]+/g, "_");
+            appInsights.setAuthenticatedUserContext(userName);
+        } catch (error) {
+            appInsights.trackException(error, 'setToken');
+        }
     }
 
     setLanguage(lang: string) {

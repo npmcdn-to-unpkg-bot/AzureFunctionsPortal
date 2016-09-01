@@ -16,6 +16,9 @@ import {BackgroundTasksService} from '../services/background-tasks.service';
 import {GlobalStateService} from '../services/global-state.service';
 import {TranslateService} from 'ng2-translate/ng2-translate';
 import {TryLandingComponent} from './try-landing.component';
+import {IAppInsights} from '../models/app-insights';
+
+let appInsights: IAppInsights;
 
 @Component({
     selector: 'azure-functions-app',
@@ -62,13 +65,14 @@ export class AppComponent implements OnInit, AfterViewInit {
         private _trnaslateService: TranslateService
     ) {
         this.gettingStarted = !_userService.inIFrame;
-        this.showTryView = this._globalStateService.showTryView; 
+        this.showTryView = this._globalStateService.showTryView;
         this._functionsService.getResources().subscribe(() => {
             this.readyResources = true;
         });
     }
 
     ngOnInit() {
+        this.initAppInsight();
         this._globalStateService.setBusyState();
         if (!this.gettingStarted && !this.showTryView ) {
             this._portalService.getResourceId()
@@ -119,6 +123,22 @@ export class AppComponent implements OnInit, AfterViewInit {
             this._globalStateService.setBusyState();
             this._armService.getFunctionContainer(functionContainer).subscribe(fc => this.initializeDashboard(fc));
         }
+    }
+
+    initAppInsight() {
+        try {
+            if (appInsights) {
+                appInsights.queue.push(() => {
+                    appInsights.context.addTelemetryInitializer(envelope => {
+                        if (this._portalService.sessionId) {
+                            var telemetryItem = envelope.data.baseData;
+                            telemetryItem.properties = telemetryItem.properties || {};
+                            telemetryItem.properties['sessionId'] = this._portalService.sessionId;
+                        }
+                    });
+                });
+            }
+        } catch (e) {}
     }
 
     private redirectToIbizaIfNeeded(functionContainer: FunctionContainer | string): boolean {
